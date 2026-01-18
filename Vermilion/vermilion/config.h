@@ -8,4 +8,6 @@ namespace Vermilion {
 #endif
 
 	constexpr auto DriverPath = L"\\\\.\\colonelLink";
+
+	constexpr ImColor AccentColour{ 227, 66, 52 };
 } // namespace Vermilion

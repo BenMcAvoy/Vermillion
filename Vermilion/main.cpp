@@ -1,5 +1,7 @@
 #define VERMILLION_FARLIGHT84
 
+#define NOMINMAX
+
 #include <vermilion/render.h>
 #include <vermilion/sdk.h>
 
@@ -11,7 +13,7 @@ std::unordered_map<UE::USkeletalMesh*, std::vector<std::pair<int, int>>> g_pairC
 std::span<std::pair<int, int>> GetSkeletonBonePairs(UE::USkeletalMesh* skelMesh) {
     if (g_pairCache.find(skelMesh) != g_pairCache.end()) {
         auto& cachedPairs = g_pairCache[skelMesh];
-        return std::span<std::pair<int, int>>(cachedPairs.data(), cachedPairs.size());
+        return { cachedPairs.data(), cachedPairs.size() };
     }
 
     std::vector<std::pair<int, int>> bonePairs;
@@ -71,6 +73,73 @@ std::span<std::pair<int, int>> GetSkeletonBonePairs(UE::USkeletalMesh* skelMesh)
     };
 }
 
+void watermark() {
+    ImDrawList* draw = ImGui::GetForegroundDrawList();
+    ImGuiIO& io = ImGui::GetIO();
+
+    const char* title = "Vermilion";
+    const char* sep   = "|";
+
+    char fpsBuf[32];
+    snprintf(fpsBuf, sizeof(fpsBuf), "%.0f FPS", io.Framerate);
+
+    ImVec2 padding(8.0f, 6.0f);
+    float accentWidth = 3.0f;
+
+    ImVec2 titleSize = ImGui::CalcTextSize(title);
+    ImVec2 sepSize   = ImGui::CalcTextSize(sep);
+    ImVec2 fpsSize   = ImGui::CalcTextSize(fpsBuf);
+
+    float textHeight = std::max({
+        titleSize.y,
+        sepSize.y,
+        fpsSize.y
+    });
+
+    float height =
+        padding.y * 2.0f +
+        textHeight;
+
+    float width =
+        accentWidth +
+        padding.x +
+        titleSize.x +
+        padding.x * 0.5f +
+        sepSize.x +
+        padding.x * 0.5f +
+        fpsSize.x +
+        padding.x;
+
+    ImVec2 pos(10.0f, 10.0f);
+    ImVec2 end(pos.x + width, pos.y + height);
+
+    ImU32 bgCol     = IM_COL32(20, 20, 20, 220);
+    ImU32 accentCol = Vermilion::AccentColour;
+    ImU32 textCol   = IM_COL32(230, 230, 230, 255);
+    ImU32 fpsCol    = IM_COL32(160, 160, 160, 255);
+
+    draw->AddRectFilled(pos, end, bgCol, 4.0f);
+
+    draw->AddRectFilled(
+        pos,
+        ImVec2(pos.x + accentWidth, end.y),
+        accentCol,
+        4.0f,
+        ImDrawFlags_RoundCornersLeft
+    );
+
+    float textY = pos.y + (height - textHeight) * 0.5f;
+    float x = pos.x + accentWidth + padding.x;
+
+    draw->AddText(ImVec2(x, textY), accentCol, title);
+    x += titleSize.x + padding.x * 0.5f;
+
+    draw->AddText(ImVec2(x, textY), textCol, sep);
+    x += sepSize.x + padding.x * 0.5f;
+
+    draw->AddText(ImVec2(x, textY), fpsCol, fpsBuf);
+}
+
 void entry() {
     UE::Init();
 
@@ -85,6 +154,8 @@ void entry() {
 
     while (true) {
         Render.BeginFrame();
+
+		watermark();
 
         auto players = UE::GWorld->GameState->PlayerArray;
 
@@ -136,7 +207,7 @@ void entry() {
                     ImGui::GetBackgroundDrawList()->AddLine(
                         jointAScreenPos->ToImVec2(),
                         jointBScreenPos->ToImVec2(),
-                        IM_COL32(60, 255, 60, 255),
+						AccentColour,
                         2.0f
                     );
                 }

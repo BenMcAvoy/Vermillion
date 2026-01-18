@@ -31,6 +31,11 @@ namespace Vermilion::UE {
                         index++;
                     }
                     catch (std::exception) {
+                        std::string msg = std::format(
+                            "Failed to get bone name at index {}: {}",
+                            index,
+                            boneInfo.NameIdx
+						);
                         index++;
                         continue;
                     }

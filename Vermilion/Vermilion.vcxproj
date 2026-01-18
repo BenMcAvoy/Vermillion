@@ -154,6 +154,7 @@
     <ClCompile Include="vermilion\render.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="vermilion\buffer.h" />
     <ClInclude Include="vermilion\render.h" />
     <ClInclude Include="vermilion\ue\acharacter.h" />
     <ClInclude Include="vermilion\ue\agamestatebase.h" />
