@@ -51,8 +51,6 @@ namespace Vermilion {
 
 		template <typename T, Addressable U>
 		T Read(U address) {
-			static_assert(std::is_trivially_copyable_v<T>, "T must be trivially copyable");
-
 			T value{};
 			IoCtlReq(
 				READCODE,

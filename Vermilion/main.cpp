@@ -1,23 +1,154 @@
 #define VERMILLION_FARLIGHT84
 
+#include <vermilion/render.h>
 #include <vermilion/sdk.h>
 
-void entry() {
-    using namespace Vermilion;
+#include <span>
 
+using namespace Vermilion;
+
+std::unordered_map<UE::USkeletalMesh*, std::vector<std::pair<int, int>>> g_pairCache;
+std::span<std::pair<int, int>> GetSkeletonBonePairs(UE::USkeletalMesh* skelMesh) {
+    if (g_pairCache.find(skelMesh) != g_pairCache.end()) {
+        auto& cachedPairs = g_pairCache[skelMesh];
+        return std::span<std::pair<int, int>>(cachedPairs.data(), cachedPairs.size());
+    }
+
+    std::vector<std::pair<int, int>> bonePairs;
+    if (!skelMesh) return {};
+
+    auto refSkel = skelMesh->RefSkeleton;
+
+    std::pair<const char*, const char*> SkeletonPairs[] = {
+        // Spine
+        {"pelvis",        "spine_01"},
+        {"spine_01",      "spine_02"},
+        {"spine_02",      "spine_03"},
+        {"spine_03",      "neck_01"},
+
+        // Left arm
+        {"neck_01",     "clavicle_l"},
+        {"clavicle_l",  "upperarm_l"},
+        {"upperarm_l",  "lowerarm_l"},
+        {"lowerarm_l",  "hand_l"},
+
+        // Right arm
+        {"neck_01",     "clavicle_r"},
+        {"clavicle_r",  "upperarm_r"},
+        {"upperarm_r",  "lowerarm_r"},
+        {"lowerarm_r",  "hand_r"},
+
+        // Left leg
+        {"pelvis",        "thigh_l"},
+        {"thigh_l",       "calf_l"},
+        {"calf_l",        "foot_l"},
+        {"foot_l",        "ball_l"},
+
+        // Right leg
+        {"pelvis",        "thigh_r"},
+        {"thigh_r",       "calf_r"},
+        {"calf_r",        "foot_r"},
+        {"foot_r",        "ball_r"},
+    };
+
+    for (auto& boneNamePair : SkeletonPairs) {
+        auto boneAIndex = refSkel.GetBoneIndexByName(boneNamePair.first);
+        auto boneBIndex = refSkel.GetBoneIndexByName(boneNamePair.second);
+
+        if (boneAIndex && boneBIndex) {
+            int boneAIndexR = *boneAIndex;
+            int boneBIndexR = *boneBIndex;
+
+            bonePairs.emplace_back(boneAIndexR, boneBIndexR);
+        }
+    }
+
+    g_pairCache[skelMesh] = bonePairs;
+
+    return {
+        g_pairCache[skelMesh].data(),
+        g_pairCache[skelMesh].size(),
+    };
+}
+
+void entry() {
     UE::Init();
 
-    UE::FName fWorldName = UE::GWorld->NamePrivate;
-    std::string& worldName = fWorldName.ToString();
-    std::println("World name: {}", worldName);
+    auto localPlayer = UE::GWorld
+		->OwningGameInstance
+		->LocalPlayers[0]
+		->PlayerController;
+
+	auto localPawn = localPlayer->AcknowledgedPawn;
+
+    Render.Init();
+
+    while (true) {
+        Render.BeginFrame();
+
+        auto players = UE::GWorld->GameState->PlayerArray;
+
+        for (auto player : players) {
+            auto playerPawn = player->PawnPrivate;
+
+            if (localPlayer->AcknowledgedPawn == playerPawn)
+                continue;
+
+            auto playerChar = static_cast<UE::ACharacter*>(playerPawn);
+
+            if (!playerChar) continue;
+
+            auto bonePairs = GetSkeletonBonePairs(playerChar->Mesh->SkeletalMesh);
+            UE::FTransform c2w = playerChar->Mesh->ComponentToWorld;
+            UE::FMatrix c2wMatrix = c2w.ToMatrix();
+
+            auto boneArray = playerChar->Mesh->BoneArray;
+            for (auto [a, b] : bonePairs) {
+                if (boneArray.Count == 0) continue;
+
+                UE::FMatrix jointA, jointB;
+                try {
+                    jointA = boneArray[a].ToMatrix();
+                    jointB = boneArray[b].ToMatrix();
+                } catch (std::exception) {
+                    continue;
+				}
+
+                auto jointAWorld = jointA * c2wMatrix;
+                auto jointBWorld = jointB * c2wMatrix;
+
+                auto jointAFVec = UE::FVector{
+                    jointAWorld.M[3][0],
+                    jointAWorld.M[3][1],
+                    jointAWorld.M[3][2],
+                };
+
+                auto jointBFVec = UE::FVector{
+                    jointBWorld.M[3][0],
+                    jointBWorld.M[3][1],
+                    jointBWorld.M[3][2],
+                };
+
+                auto jointAScreenPos = localPlayer->PlayerCameraManager->WorldToScreen(jointAFVec, 1920, 1080);
+                auto jointBScreenPos = localPlayer->PlayerCameraManager->WorldToScreen(jointBFVec, 1920, 1080);
+
+                if (jointAScreenPos && jointBScreenPos) {
+                    ImGui::GetBackgroundDrawList()->AddLine(
+                        jointAScreenPos->ToImVec2(),
+                        jointBScreenPos->ToImVec2(),
+                        IM_COL32(60, 255, 60, 255),
+                        2.0f
+                    );
+                }
+            }
+        }
+
+        Render.EndFrame();
+    }
 }
 
 int main() {
-    try {
-        entry();
-    } catch (const std::exception& e) {
-        std::println("Error: {}", e.what());
-	}
+    entry();
 
     return 0;
 }

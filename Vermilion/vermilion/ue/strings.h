@@ -45,7 +45,7 @@ namespace Vermilion::UE {
 
 			auto oName = _GetNameAsString(chunkOffset, nameOffset);
 			nameCache_[ComparisonIdx] = oName;
-			
+
 			std::optional<std::string>& val = nameCache_[ComparisonIdx];
 			return val ? &val.value() : nullptr;
 		}

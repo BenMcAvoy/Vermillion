@@ -49,6 +49,25 @@ namespace Vermilion::UE {
         }
     };
 
+    struct FVector2D {
+        float X;
+        float Y;
+
+        FVector2D() : X(0), Y(0) {}
+        FVector2D(float x, float y) : X(x), Y(y) {}
+
+        std::string ToString() const {
+            return std::format("FVector2D(X: {}, Y: {})", X, Y);
+        }
+
+        ImVec2 ToImVec2() {
+            return {
+                X,
+                Y
+            };
+        }
+	};
+
     struct FRotator {
         float Pitch;
         float Yaw;

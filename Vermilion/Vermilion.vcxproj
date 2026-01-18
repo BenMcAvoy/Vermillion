@@ -70,6 +70,25 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnableManifest>true</VcpkgEnableManifest>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <VcpkgUseStatic>true</VcpkgUseStatic>
+    <VcpkgUseMD>true</VcpkgUseMD>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <VcpkgUseStatic>true</VcpkgUseStatic>
+    <VcpkgUseMD>true</VcpkgUseMD>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <VcpkgUseStatic>true</VcpkgUseStatic>
+    <VcpkgUseMD>true</VcpkgUseMD>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <VcpkgUseStatic>true</VcpkgUseStatic>
+    <VcpkgUseMD>true</VcpkgUseMD>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -132,18 +151,32 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="vermilion\render.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="vermilion\render.h" />
+    <ClInclude Include="vermilion\ue\acharacter.h" />
+    <ClInclude Include="vermilion\ue\agamestatebase.h" />
+    <ClInclude Include="vermilion\ue\apawn.h" />
+    <ClInclude Include="vermilion\ue\aplayercameramanager.h" />
     <ClInclude Include="Vermilion\config.h" />
     <ClInclude Include="Vermilion\driver.h" />
     <ClInclude Include="vermilion\macros.h" />
     <ClInclude Include="vermilion\offsets.h" />
     <ClInclude Include="Vermilion\sdk.h" />
+    <ClInclude Include="vermilion\ue\aactor.h" />
+    <ClInclude Include="vermilion\ue\aplayercontroller.h" />
+    <ClInclude Include="vermilion\ue\aplayerstate.h" />
     <ClInclude Include="Vermilion\ue\containers.h" />
     <ClInclude Include="Vermilion\ue\math.h" />
+    <ClInclude Include="vermilion\ue\scenecomponent.h" />
+    <ClInclude Include="vermilion\ue\skeleton.h" />
     <ClInclude Include="vermilion\ue\strings.h" />
     <ClInclude Include="Vermilion\ue\ue.h" />
+    <ClInclude Include="vermilion\ue\ugameinstance.h" />
+    <ClInclude Include="vermilion\ue\ulocalplayer.h" />
     <ClInclude Include="Vermilion\ue\uobject.h" />
+    <ClInclude Include="vermilion\ue\uplayer.h" />
     <ClInclude Include="vermilion\ue\uworld.h" />
   </ItemGroup>
   <ItemGroup>
