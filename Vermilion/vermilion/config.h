@@ -1,0 +1,11 @@
+#pragma once
+
+namespace Vermilion {
+#ifdef VERMILLION_FARLIGHT84
+	constexpr auto ProcessName = L"SolarlandClient-Win64-Shipping.exe";
+#else
+#error "Currently only Farlight84 is supported"
+#endif
+
+	constexpr auto DriverPath = L"\\\\.\\colonelLink";
+} // namespace Vermilion
