@@ -1,5 +1,7 @@
 #pragma once
 
+#define VERMILLION_FARLIGHT84
+
 namespace Vermilion {
 #ifdef VERMILLION_FARLIGHT84
 	constexpr auto ProcessName = L"SolarlandClient-Win64-Shipping.exe";

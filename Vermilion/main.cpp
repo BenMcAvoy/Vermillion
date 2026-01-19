@@ -1,11 +1,11 @@
-#define VERMILLION_FARLIGHT84
-
 #define NOMINMAX
+#define IMGUI_DEFINE_MATH_OPERATORS
 
 #include <vermilion/render.h>
 #include <vermilion/sdk.h>
 
 #include <span>
+#include <string>
 
 #define RENDERCONTINUE {Render.EndFrame(); continue; }
 
@@ -142,30 +142,138 @@ void watermark() {
     draw->AddText(ImVec2(x, textY), fpsCol, fpsBuf);
 }
 
+void windowheader(const char* title) {
+    ImDrawList* draw = ImGui::GetWindowDrawList();
+    ImVec2 windowPos = ImGui::GetWindowPos();
+    ImVec2 windowSize = ImGui::GetWindowSize();
+    ImVec2 padding(8.0f, 6.0f);
+    float accentWidth = 3.0f;
+    ImVec2 titleSize = ImGui::CalcTextSize(title);
+    float textHeight = titleSize.y;
+    float height =
+        padding.y * 2.0f +
+        textHeight;
+    // width is the full window width
+	float width = windowSize.x;
+    ImVec2 pos(windowPos.x, windowPos.y);
+    ImVec2 end(pos.x + width, pos.y + height);
+    ImU32 bgCol     = IM_COL32(20, 20, 20, 220);
+    ImU32 accentCol = Vermilion::AccentColour;
+    ImU32 textCol   = IM_COL32(230, 230, 230, 255);
+    draw->AddRectFilled(pos, end, bgCol, 4.0f);
+    draw->AddRectFilled(
+        pos,
+        ImVec2(pos.x + accentWidth, end.y),
+        accentCol,
+        4.0f,
+        ImDrawFlags_RoundCornersLeft
+    );
+    float textY = pos.y + (height - textHeight) * 0.5f;
+    float x = pos.x + accentWidth + padding.x;
+	draw->AddText(ImVec2(x, textY), accentCol, title);
+	ImGui::SetCursorPosY(ImGui::GetCursorPosY() + height);
+}
+
+bool checkbox(const char* label, bool& v) {
+    ImDrawList* draw = ImGui::GetWindowDrawList();
+    ImGuiIO& io = ImGui::GetIO();
+
+    // Per-label animation progress (0.0 = unchecked, 1.0 = checked)
+    static std::unordered_map<std::string, float> s_progress;
+
+    // Invisible button to capture clicks
+    ImGui::InvisibleButton(label, ImVec2(20.0f, 20.0f));
+    if (ImGui::IsItemClicked()) {
+        v = !v;
+    }
+
+    float& prog = s_progress[std::string(label)];
+    float target = v ? 1.0f : 0.0f;
+    float dt = io.DeltaTime;
+    const float speed = 12.0f; // higher = snappier
+    float step = std::min(dt * speed, 1.0f);
+    prog += (target - prog) * step;
+
+    ImVec2 pos = ImGui::GetItemRectMin();
+    ImVec2 end = ImGui::GetItemRectMax();
+
+    // Lerp between frame background and accent colour
+    ImVec4 bgCol = ImGui::GetStyleColorVec4(ImGuiCol_FrameBg);
+    ImVec4 accCol = ImGui::ColorConvertU32ToFloat4(Vermilion::AccentColour);
+    ImVec4 mixed = ImVec4(
+        bgCol.x + (accCol.x - bgCol.x) * prog,
+        bgCol.y + (accCol.y - bgCol.y) * prog,
+        bgCol.z + (accCol.z - bgCol.z) * prog,
+        bgCol.w + (accCol.w - bgCol.w) * prog
+    );
+
+    ImU32 boxCol = ImGui::GetColorU32(mixed);
+    draw->AddRectFilled(pos, end, boxCol, 4.0f);
+
+    // Animated check: draw partial lines based on progress
+    if (prog > 0.001f) {
+        ImU32 checkCol = IM_COL32(230, 230, 230, (int)(255 * prog));
+
+        ImVec2 p1 = ImVec2(pos.x + 4.0f, pos.y + 10.0f);
+        ImVec2 p2 = ImVec2(pos.x + 8.0f, pos.y + 14.0f);
+        ImVec2 p3 = ImVec2(pos.x + 16.0f, pos.y + 6.0f);
+
+        ImVec2 mid1 = ImVec2(
+            p1.x + (p2.x - p1.x) * prog,
+            p1.y + (p2.y - p1.y) * prog
+        );
+        ImVec2 mid2 = ImVec2(
+            p2.x + (p3.x - p2.x) * prog,
+            p2.y + (p3.y - p2.y) * prog
+        );
+
+        float thickness = 2.0f * (0.6f + 0.4f * prog);
+        draw->AddLine(p1, mid1, checkCol, thickness);
+        draw->AddLine(p2, mid2, checkCol, thickness);
+    }
+
+    ImGui::SameLine();
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 2.0f);
+    ImGui::TextUnformatted(label);
+    return v;
+}
+
+void windowdropshadow() {
+    // draw a subtle frame around the window
+	ImDrawList* draw = ImGui::GetWindowDrawList();
+    ImVec2 windowPos = ImGui::GetWindowPos();
+    ImVec2 windowSize = ImGui::GetWindowSize();
+    ImVec2 pos = ImVec2(windowPos.x - 1.0f, windowPos.y - 1.0f);
+    ImVec2 end = ImVec2(windowPos.x + windowSize.x + 1.0f, windowPos.y + windowSize.y + 1.0f);
+    ImU32 shadowCol = IM_COL32(0, 0, 0, 100);
+	draw->AddRect(pos, end, shadowCol, 4.0f);
+}
+
 void entry() {
     UE::Init();
-
-    /*auto localPlayer = UE::GWorld
-		->OwningGameInstance
-		->LocalPlayers[0]
-		->PlayerController;
-
-	auto localPawn = localPlayer->AcknowledgedPawn;*/
 
     auto localPlayer = UE::GWorld
         ->OwningGameInstance
         ->LocalPlayers[0];
 
-	auto gameState = UE::GWorld->GameState;
-
-    if (!localPlayer || !gameState) {
+    if (!localPlayer) {
 		std::println("Failed to get local player or game state.");
         return;
     }
  
     Render.Init();
 
+    bool showSkeleton   = true;
+	bool showTracers    = true;
+	bool showTracersTop = true;
+
     while (true) {
+        if (!UE::UWorld::Get())
+            continue;
+
+	    auto gameState = UE::GWorld->GameState;
+        if (!gameState) continue;
+
         Render.BeginFrame();
 
         watermark();
@@ -198,23 +306,15 @@ void entry() {
 			if (!playerChar->Mesh) continue;
 			if (!playerChar->Mesh->SkeletalMesh) continue;
 
-            // Draw tracer
-            auto location = playerChar->RootComponent->RelativeLocation;
-			auto screenPos = localController->PlayerCameraManager->WorldToScreen(location, 1920, 1080);
-            if (screenPos) {
-                ImGui::GetBackgroundDrawList()->AddLine(
-                    ImVec2(1920.0f / 2.0f, 0.0f),
-                    screenPos->ToImVec2(),
-                    AccentColour,
-                    0.2f
-                    );
-            }
-
             auto bonePairs = GetSkeletonBonePairs(playerChar->Mesh->SkeletalMesh);
             UE::FTransform c2w = playerChar->Mesh->ComponentToWorld;
             UE::FMatrix c2wMatrix = c2w.ToMatrix();
 
+            UE::FVector neckPos;
+
             auto boneArray = playerChar->Mesh->BoneArray;
+
+            size_t index = 0;
             for (auto [a, b] : bonePairs) {
                 if (boneArray.Count == 0) continue;
 
@@ -235,6 +335,19 @@ void entry() {
                     jointAWorld.M[3][2],
                 };
 
+				// If index is 3, then Joint A is neck_01
+                if (index == 3) {
+                    neckPos = jointAFVec;
+                    if (!showSkeleton) {
+                        break;
+					}
+				}
+
+                if (!showSkeleton) {
+                    index++;
+                    continue;
+                }
+
                 auto jointBFVec = UE::FVector{
                     jointBWorld.M[3][0],
                     jointBWorld.M[3][1],
@@ -252,10 +365,42 @@ void entry() {
                         2.0f
                     );
                 }
+
+				index++;
+            }
+
+			// Draw tracer to neck
+            if (showTracers) {
+                auto neckScreenPos = localController->PlayerCameraManager->WorldToScreen(neckPos, 1920, 1080);
+                if (neckScreenPos) {
+                    ImGui::GetBackgroundDrawList()->AddLine(
+						ImVec2(1920.0f / 2.0f, (showTracersTop ? 0.0f : 1080.0f)),
+                        neckScreenPos->ToImVec2(),
+                        AccentColour,
+                        1.0f
+                    );
+                }
             }
         }
 
-end:
+        if (Render.running) {
+			// No titlebar (we render our own)
+			ImGui::Begin("Vermilion Menu", nullptr, 
+                ImGuiWindowFlags_NoTitleBar |
+                ImGuiWindowFlags_NoSavedSettings |
+				ImGuiWindowFlags_NoResize
+			);
+
+			windowheader("Vermilion Menu");
+            windowdropshadow();
+
+			checkbox("Show Skeleton", showSkeleton);
+			checkbox("Show Tracers", showTracers);
+			checkbox("Tracers from Top", showTracersTop);
+
+            ImGui::End();
+        }
+
         Render.EndFrame();
     }
 }

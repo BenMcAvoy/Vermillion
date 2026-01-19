@@ -7,6 +7,8 @@
 #include <chrono>
 #include <thread>
 
+#include <imgui_internal.h>
+
 using namespace Vermilion;
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -169,6 +171,44 @@ bool Render_t::InitDevice() {
     return false;
 }
 
+void ApplyAccentColor(const ImColor& accent) {
+    ImGuiStyle& style = ImGui::GetStyle();
+    ImVec4 a = accent.Value;
+
+    // Core interactive elements
+    style.Colors[ImGuiCol_CheckMark] = a;
+    style.Colors[ImGuiCol_SliderGrab] = a;
+    style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(a.x * 1.1f, a.y * 1.1f, a.z * 1.1f, a.w);
+    style.Colors[ImGuiCol_Button] = ImVec4(a.x * 0.85f, a.y * 0.85f, a.z * 0.85f, a.w);
+    style.Colors[ImGuiCol_ButtonHovered] = ImVec4(a.x * 1.0f, a.y * 1.0f, a.z * 1.0f, a.w);
+    style.Colors[ImGuiCol_ButtonActive] = ImVec4(a.x * 1.15f, a.y * 1.15f, a.z * 1.15f, a.w);
+
+    // Headers (trees, collapsing headers, tables)
+    style.Colors[ImGuiCol_Header] = ImVec4(a.x * 0.8f, a.y * 0.8f, a.z * 0.8f, a.w);
+    style.Colors[ImGuiCol_HeaderHovered] = a;
+    style.Colors[ImGuiCol_HeaderActive] = ImVec4(a.x * 1.1f, a.y * 1.1f, a.z * 1.1f, a.w);
+
+    // Tabs
+    style.Colors[ImGuiCol_Tab] = ImVec4(a.x * 0.75f, a.y * 0.75f, a.z * 0.75f, a.w);
+    style.Colors[ImGuiCol_TabHovered] = a;
+    style.Colors[ImGuiCol_TabActive] = ImVec4(a.x * 1.1f, a.y * 1.1f, a.z * 1.1f, a.w);
+    style.Colors[ImGuiCol_TabUnfocused] = ImVec4(a.x * 0.5f, a.y * 0.5f, a.z * 0.5f, a.w);
+    style.Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(a.x * 0.85f, a.y * 0.85f, a.z * 0.85f, a.w);
+
+    // Resize grips
+    style.Colors[ImGuiCol_ResizeGrip] = ImVec4(a.x * 0.6f, a.y * 0.6f, a.z * 0.6f, a.w);
+    style.Colors[ImGuiCol_ResizeGripHovered] = a;
+    style.Colors[ImGuiCol_ResizeGripActive] = ImVec4(a.x * 1.2f, a.y * 1.2f, a.z * 1.2f, a.w);
+
+    // Title bar
+    style.Colors[ImGuiCol_TitleBg] = ImVec4(a.x * 0.6f, a.y * 0.6f, a.z * 0.6f, a.w);
+    style.Colors[ImGuiCol_TitleBgActive] = ImVec4(a.x * 0.9f, a.y * 0.9f, a.z * 0.9f, a.w);
+    style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(a.x * 0.4f, a.y * 0.4f, a.z * 0.4f, a.w);
+
+    // Disable window borders
+	style.WindowBorderSize = 0.0f;
+}
+
 bool Render_t::InitImGui() {
     using namespace ImGui;
     CreateContext();
@@ -186,6 +226,9 @@ bool Render_t::InitImGui() {
     // C:\Windows\Fonts\verdana.ttf
 	io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\verdana.ttf", 14.0f * scale);
     io.Fonts->Build();
+
+	ImGuiStyle& imguiStyle = ImGui::GetStyle();
+    ApplyAccentColor(Vermilion::AccentColour);
 
     if (!ImGui_ImplWin32_Init(renderData.window))
         return false;
