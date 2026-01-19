@@ -42,6 +42,8 @@ namespace Vermilion::UE {
             uint32_t Width,
             uint32_t Height
         ) const {
+            if (!this) return std::nullopt;
+
             auto POV = CameraCachePrivate.POV;
 
             FMatrix View(POV.Rotation);
