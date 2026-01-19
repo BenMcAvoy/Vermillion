@@ -18,14 +18,16 @@ namespace Vermilion::UE {
 	public:
 		VERMILION_PROP(ASolarPlayState, FString, NickName, _NickName)
 		VERMILION_PROP(ASolarPlayState, uint8_t, CurrentCharacterStateInGame, _CurrentCharacterStateInGame)
+		VERMILION_PROP(ASolarPlayState, bool, bIsSameTeamAsLocalPlayer, _bIsSameTeamAsLocalPlayer)
 
 	private:
 		/* 0x3E8 */ char pad_0x3E8[0xC0];
 		/* 0x4A8 */ FString _NickName;
 		/* 0x4B8 */ char pad_0x4B8[0x2C8];
 		/* 0x780 */ uint8_t _CurrentCharacterStateInGame;
-		/* 0x781 */ char pad_0x781[0x7];
-		/* 0x788 */ char pad_0x788[0x13E8];
+		/* 0x788 */ char pad_0x788[0xB7];
+		/* 0x838 */ bool _bIsSameTeamAsLocalPlayer;
+		/* 0x839 */ char pad_0x839[0x1337];
 	};
 
 	VERMILION_ASSERT_SIZE(ASolarPlayState, 0x1B70);

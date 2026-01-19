@@ -187,6 +187,9 @@ void entry() {
             if (solarPlayerState->CurrentCharacterStateInGame == 4) // Dead
 				continue;
 
+            if (solarPlayerState->bIsSameTeamAsLocalPlayer)
+				continue;
+
             if (localController->AcknowledgedPawn == playerPawn)
                 continue;
 
