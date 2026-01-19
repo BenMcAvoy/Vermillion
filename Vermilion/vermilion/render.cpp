@@ -47,7 +47,7 @@ Render_t::~Render_t() {
 bool Render_t::InitWindow() {
     renderData.wndclass.cbSize = sizeof(renderData.wndclass);
     renderData.wndclass.style = CS_CLASSDC;
-    renderData.wndclass.lpszClassName = L"T4";
+    renderData.wndclass.lpszClassName = L"Vermilion";
     renderData.wndclass.hInstance = GetModuleHandleA(0);
     renderData.wndclass.lpfnWndProc = WndProc;
 
@@ -55,8 +55,8 @@ bool Render_t::InitWindow() {
 
     renderData.window = CreateWindowExW(
         WS_EX_TOPMOST | WS_EX_TRANSPARENT | WS_EX_LAYERED | WS_EX_TOOLWINDOW,
-        L"T4",
-        L"T4",
+        L"Vermilion",
+        L"Vermilion",
         WS_POPUP,
         0,
         0,
@@ -206,7 +206,7 @@ void Render_t::DeinitDevice() {
 
 void Render_t::DeinitWindow() {
     DestroyWindow(renderData.window);
-    UnregisterClassW(L"T4", renderData.wndclass.hInstance);
+    UnregisterClassW(L"Vermilion", renderData.wndclass.hInstance);
 }
 
 void Render_t::DeinitImGui() {
@@ -252,5 +252,5 @@ void Render_t::EndFrame() {
 
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
-    renderData.swapchain->Present(0, 0);
+    renderData.swapchain->Present(1, 0);
 }

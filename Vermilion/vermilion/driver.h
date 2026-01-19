@@ -123,9 +123,9 @@ namespace Vermilion {
 				throw std::runtime_error(std::string("Failed to ") + actionContext + " via driver.");
 			}
 
-			if (ioBuffer.bytesRead != size) {
+			/*if (ioBuffer.bytesRead != size) {
 				throw std::runtime_error(std::string("Incomplete ") + actionContext + " via driver.");
-			}
+			}*/
 		}
 
 		template <typename T>

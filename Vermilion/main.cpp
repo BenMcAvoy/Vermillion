@@ -7,6 +7,8 @@
 
 #include <span>
 
+#define RENDERCONTINUE {Render.EndFrame(); continue; }
+
 using namespace Vermilion;
 
 std::unordered_map<UE::USkeletalMesh*, std::vector<std::pair<int, int>>> g_pairCache;
@@ -143,31 +145,67 @@ void watermark() {
 void entry() {
     UE::Init();
 
-    auto localPlayer = UE::GWorld
+    /*auto localPlayer = UE::GWorld
 		->OwningGameInstance
 		->LocalPlayers[0]
 		->PlayerController;
 
-	auto localPawn = localPlayer->AcknowledgedPawn;
+	auto localPawn = localPlayer->AcknowledgedPawn;*/
 
+    auto localPlayer = UE::GWorld
+        ->OwningGameInstance
+        ->LocalPlayers[0];
+
+	auto gameState = UE::GWorld->GameState;
+
+    if (!localPlayer || !gameState) {
+		std::println("Failed to get local player or game state.");
+        return;
+    }
+ 
     Render.Init();
 
     while (true) {
         Render.BeginFrame();
 
-		watermark();
+        watermark();
 
-        auto players = UE::GWorld->GameState->PlayerArray;
+        if (!localPlayer) RENDERCONTINUE;
+		auto localController = localPlayer->PlayerController;
+        if (!localController) RENDERCONTINUE;
+
+        auto players = gameState->PlayerArray;
+		if (players.Count == 0 || players.Count > 1000) RENDERCONTINUE;
 
         for (auto player : players) {
             auto playerPawn = player->PawnPrivate;
+            if (!playerPawn) continue;
 
-            if (localPlayer->AcknowledgedPawn == playerPawn)
+			UE::ASolarPlayState* solarPlayerState = static_cast<UE::ASolarPlayState*>(player);
+			if (!solarPlayerState) continue;
+
+            if (solarPlayerState->CurrentCharacterStateInGame == 4) // Dead
+				continue;
+
+            if (localController->AcknowledgedPawn == playerPawn)
                 continue;
 
             auto playerChar = static_cast<UE::ACharacter*>(playerPawn);
-
             if (!playerChar) continue;
+			if (!playerChar->Mesh) continue;
+			if (!playerChar->Mesh->SkeletalMesh) continue;
+
+            // Draw tracer
+            auto location = playerChar->RootComponent->RelativeLocation;
+			auto screenPos = localController->PlayerCameraManager->WorldToScreen(location, 1920, 1080);
+            if (screenPos) {
+                ImGui::GetBackgroundDrawList()->AddLine(
+                    ImVec2(1920.0f / 2.0f, 0.0f),
+                    screenPos->ToImVec2(),
+                    AccentColour,
+                    0.2f
+                    );
+            }
 
             auto bonePairs = GetSkeletonBonePairs(playerChar->Mesh->SkeletalMesh);
             UE::FTransform c2w = playerChar->Mesh->ComponentToWorld;
@@ -200,8 +238,8 @@ void entry() {
                     jointBWorld.M[3][2],
                 };
 
-                auto jointAScreenPos = localPlayer->PlayerCameraManager->WorldToScreen(jointAFVec, 1920, 1080);
-                auto jointBScreenPos = localPlayer->PlayerCameraManager->WorldToScreen(jointBFVec, 1920, 1080);
+                auto jointAScreenPos = localController->PlayerCameraManager->WorldToScreen(jointAFVec, 1920, 1080);
+                auto jointBScreenPos = localController->PlayerCameraManager->WorldToScreen(jointBFVec, 1920, 1080);
 
                 if (jointAScreenPos && jointBScreenPos) {
                     ImGui::GetBackgroundDrawList()->AddLine(
@@ -214,6 +252,7 @@ void entry() {
             }
         }
 
+end:
         Render.EndFrame();
     }
 }

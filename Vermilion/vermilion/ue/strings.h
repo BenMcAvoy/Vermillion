@@ -86,4 +86,24 @@ namespace Vermilion::UE {
 			return *(pStr ? pStr : &invalid);
 		}
 	};
+
+	class FString {
+	public:
+		FString() : Data() {}
+
+		std::string ToString() {
+			std::string result;
+			for (uint16_t ch : Data) {
+				if (ch == 0) break; // Null-terminated
+				result += static_cast<char>(ch);
+			}
+
+			return result;
+		}
+
+		const TArray<uint16_t>& GetData() const { return Data; }
+
+	private:
+		TArray<uint16_t> Data;
+	};
 } // namespace Vermilion::UE
